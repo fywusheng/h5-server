@@ -7,7 +7,7 @@ const reply = require('../reply');
 //引入wechat模块
 const Wechat = require('../wechat/wechat');
 //引入config模块
-const {url} = require('../config');
+const {url, appID} = require('../config');
 //引入Theaters
 const Theaters = require('../model/Theaters');
 const Trailers = require('../model/Trailers');
@@ -33,7 +33,7 @@ router.get('/search', async (req, res) => {
   const timestamp = Date.now();
   //获取票据
   const {ticket} = await wechatApi.fetchTicket();
-  
+
   // 1. 组合参与签名的四个参数：jsapi_ticket（临时票据）、noncestr（随机字符串）、timestamp（时间戳）、url（当前服务器地址）
   const arr = [
     `jsapi_ticket=${ticket}`,
@@ -41,14 +41,14 @@ router.get('/search', async (req, res) => {
     `timestamp=${timestamp}`,
     `url=${url}/search`
   ]
-  
+
   // 2. 将其进行字典序排序，以'&'拼接在一起
   const str = arr.sort().join('&');
   console.log(str);  //xxx=xxx&xxx=xxx&xxx=xxx
-  
+
   // 3. 进行sha1加密，最终生成signature
   const signature = sha1(str);
-  
+
   //渲染页面，将渲染好的页面返回给用户
   res.render('search', {
     signature,
@@ -70,7 +70,7 @@ router.get('/detail/:id', async (req, res) => {
   } else {
     res.end('error');
   }
-  
+
 })
 //预告片页面路由
 router.get('/movie', async (req, res) => {
@@ -86,17 +86,17 @@ router.get('/v3', async (req, res) => {
   const {id} = req.query;
   //去数据库中查找相应的电影弹幕信息
   const data = await Danmus.find({doubanId: id});
-  
+
   //返回给用户的数据
   let resData = [];
-  
+
   data.forEach(item => {
     resData.push([item.time, item.type, item.color, item.author, item.text])
   })
-  
+
   //返回响应
   res.send({code: 0, data: resData});
-  
+
 })
 //接受用户弹幕的路由
 router.post('/v3', async (req, res) => {
@@ -125,10 +125,42 @@ router.post('/v3', async (req, res) => {
     color,
     type
   })
-  
+
   //返回响应
   res.send({code: 0, data: {}});
-  
+
+})
+
+//获取微信配置信息
+router.get('/tech/merchant/wx/config', async (req, res) => {
+
+  //返回响应
+  res.send({
+    "code": 10,
+    "msg": "成功!",
+    "result": {
+      "weChatUrl": "http://m-test.htprudent.com",
+      "weChatAppId": appID,
+      "weChatAppSecret": null
+    }
+  });
+
+})
+
+//微信登录
+router.post('/tech/merchant/login/wxLogin', async (req, res) => {
+  console.log('微信登录--------')
+  //返回响应
+  res.send({
+    "code": 10,
+    "msg": "成功!",
+    "result": {
+      "merchantCode":"M234244",
+      "merchantName":"测试测试",
+      "businessNatureUrl":"http://dfdsafs.32424.fsdf"
+    }
+  });
+
 })
 
 //接受处理所有消息
